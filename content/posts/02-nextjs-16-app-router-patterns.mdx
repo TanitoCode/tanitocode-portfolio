@@ -1,0 +1,217 @@
+---
+title: "Patrones de App Router en Next.js 16 que uso en producción"
+date: "2026-04-10"
+category: "Frontend"
+summary: "Patrones concretos de Next.js 16 App Router: Server Components, layouts anidados, streaming con Suspense, y cómo organizar un proyecto para escalar sin fricciones."
+slug: "02-nextjs-16-app-router-patterns"
+---
+
+{/* TODO: reemplazar con casos de uso propios en producción */}
+
+## El estado actual del App Router
+
+Next.js 16 consolidó muchos de los patrones que en versiones anteriores eran experimentales o requerían workarounds. El App Router ya no es la alternativa: es el camino principal, y entender cómo pensar en términos de Server Components cambia fundamentalmente cómo estructurás una app.
+
+Este artículo cubre los patrones que más uso y los errores que cometí en el proceso.
+
+## 1. Server Components por defecto, Client Components por necesidad
+
+El error más común al migrar desde Pages Router es tratar los Client Components como el default y convertir todo a `'use client'`.
+
+La regla que adopté:
+
+> Un componente es Server Component hasta que necesite estado, efectos o APIs del browser.
+
+```tsx
+// ✅ Server Component — lee de DB directamente, sin useEffect, sin fetch client-side
+export default async function ProjectsPage() {
+  const projects = await db.select().from(projectsTable).orderBy(desc(projectsTable.createdAt))
+  
+  return (
+    <main>
+      <ProjectsGrid projects={projects} />
+    </main>
+  )
+}
+```
+
+```tsx
+// ✅ Client Component — solo porque necesita estado para el filtro
+'use client'
+
+export function ProjectsGrid({ projects }: { projects: Project[] }) {
+  const [filter, setFilter] = useState<string | null>(null)
+  const visible = filter ? projects.filter(p => p.techs.includes(filter)) : projects
+  
+  return (
+    <div>
+      <FilterBar active={filter} onChange={setFilter} />
+      {visible.map(p => <ProjectCard key={p.slug} project={p} />)}
+    </div>
+  )
+}
+```
+
+La frontera Server/Client se define en el punto más bajo del árbol donde empieza la interactividad. Todo lo que está arriba sigue siendo Server Component.
+
+## 2. Layouts anidados para compartir UI sin re-renders
+
+Los layouts en App Router se montan una sola vez y no se re-renderizan al navegar entre rutas del mismo segmento. Eso los hace perfectos para shells de UI que deben persistir.
+
+```
+app/
+  layout.tsx          ← Root layout: <html>, <body>, Nav, Footer
+  page.tsx            ← /
+  blog/
+    layout.tsx        ← Blog layout: sidebar con categorías
+    page.tsx          ← /blog
+    [slug]/
+      page.tsx        ← /blog/[slug]
+  dashboard/
+    layout.tsx        ← Dashboard layout: sidebar con nav de admin
+    page.tsx          ← /dashboard
+    settings/
+      page.tsx        ← /dashboard/settings
+```
+
+```tsx
+// app/blog/layout.tsx
+export default function BlogLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="blog-shell">
+      <aside className="blog-sidebar">
+        <CategoryNav />   {/* Server Component — datos estáticos */}
+      </aside>
+      <div className="blog-content">
+        {children}
+      </div>
+    </div>
+  )
+}
+```
+
+Una trampa: si ponés un Client Component en el layout, todo lo que está dentro puede verse forzado a ser Client también. Mantené los layouts como Server Components siempre que puedas.
+
+## 3. Streaming con Suspense para UX progresiva
+
+En lugar de bloquear toda la página esperando el dato más lento, podés hacer streaming: la shell se envía inmediatamente y los datos pesados llegan en stream.
+
+```tsx
+// app/dashboard/page.tsx
+import { Suspense } from 'react'
+
+export default function DashboardPage() {
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      
+      {/* Esto se renderiza inmediatamente */}
+      <QuickStats />
+      
+      {/* Este bloque llega en stream cuando el dato esté listo */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <RevenueChart />   {/* hace await a una query lenta */}
+      </Suspense>
+      
+      <Suspense fallback={<TableSkeleton />}>
+        <RecentActivity />  {/* otro await independiente */}
+      </Suspense>
+    </main>
+  )
+}
+```
+
+Los dos `Suspense` se resuelven en paralelo — no hay cascada de fetches. El usuario ve la shell y los skeletons mientras los datos cargan.
+
+> Regla práctica: si una sección tarda más de 200ms en resolverse, vale la pena envolverla en Suspense.
+
+## 4. generateStaticParams para SSG granular
+
+Para rutas dinámicas con contenido predecible (blog posts, páginas de producto), `generateStaticParams` pre-genera las páginas en build time:
+
+```tsx
+// app/blog/[slug]/page.tsx
+
+export async function generateStaticParams() {
+  const posts = getAllPosts()
+  return posts.map(post => ({ slug: post.slug }))
+}
+
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params   // params es Promise en Next.js 16
+  const post = getPostBySlug(slug)
+  
+  if (!post) notFound()
+  
+  return <PostContent post={post} />
+}
+```
+
+Notar que en Next.js 16, `params` es una `Promise` — hay que hacer `await params` antes de acceder a los valores. Este cambio rompió código de Next.js 14/15 que accedía a `params.slug` directamente.
+
+## 5. Server Actions para mutaciones sin API routes
+
+Para formularios y mutaciones simples, las Server Actions eliminan la necesidad de crear una route handler:
+
+```tsx
+// app/contacto/page.tsx
+async function submitContact(formData: FormData) {
+  'use server'
+  
+  const nombre = formData.get('nombre') as string
+  const email = formData.get('email') as string
+  const mensaje = formData.get('mensaje') as string
+  
+  const result = contactSchema.safeParse({ nombre, email, mensaje })
+  if (!result.success) return { error: result.error.flatten() }
+  
+  await db.insert(contactMessages).values(result.data)
+  revalidatePath('/contacto')
+}
+
+export default function ContactPage() {
+  return (
+    <form action={submitContact}>
+      <input name="nombre" required />
+      <input name="email" type="email" required />
+      <textarea name="mensaje" required />
+      <button type="submit">Enviar</button>
+    </form>
+  )
+}
+```
+
+Para formularios con feedback visual (estado loading, errores en tiempo real), seguís necesitando `useActionState` en un Client Component. Las Server Actions no reemplazan el manejo de estado del cliente — complementan la capa de servidor.
+
+## 6. Organización de carpetas que escala
+
+La estructura que adopté para proyectos medianos:
+
+```
+src/
+  app/                 ← Solo routing y layouts
+    (auth)/            ← Route group: no aparece en la URL
+      login/
+      register/
+    (marketing)/       ← Otro route group
+      page.tsx         ← /
+      about/
+  components/
+    ui/                ← Átomos: Button, Badge, Input
+    layout/            ← Header, Footer, Sidebar
+    sections/          ← Secciones de página: Hero, Features
+    [feature]/         ← Componentes específicos de cada feature
+  lib/
+    db/                ← Schema, cliente, queries
+    validations/       ← Schemas Zod
+  hooks/               ← Custom hooks (solo Client Components)
+  types/               ← TypeScript types globales
+```
+
+Los **Route Groups** con paréntesis `(grupo)` son uno de los features más infrautilizados: agrupan rutas lógicamente sin afectar la URL, y cada grupo puede tener su propio layout.
+
+## Conclusión
+
+El App Router recompensa pensar primero en qué datos necesitás y quién los necesita. Los Server Components no son una optimización opcional — son la arquitectura base que reduce el JavaScript enviado al cliente de forma estructural.
+
+Los patrones de este artículo evolucionaron de cometer los errores típicos: demasiado `'use client'`, fetch en efectos, route handlers para todo. Adoptarlos gradualmente, entendiendo el porqué de cada uno, es mejor que aplicarlos todos de golpe.

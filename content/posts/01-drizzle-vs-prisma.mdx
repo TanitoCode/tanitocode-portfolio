@@ -1,0 +1,173 @@
+---
+title: "Drizzle ORM vs Prisma: cuál elegir en 2026"
+date: "2026-03-15"
+category: "Backend"
+summary: "Comparativa técnica entre Drizzle ORM y Prisma para proyectos Next.js modernos: type-safety, performance, migraciones y experiencia de desarrollo."
+slug: "01-drizzle-vs-prisma"
+---
+
+{/* TODO: reemplazar con análisis basado en proyectos reales */}
+
+## Por qué esta comparativa importa
+
+Si estás construyendo una aplicación fullstack con Next.js y TypeScript, elegir el ORM correcto es una decisión que afecta desde la velocidad de desarrollo hasta el comportamiento en producción. Prisma lleva años siendo la opción default, pero Drizzle ORM ganó terreno en 2024-2026 con un enfoque radicalmente distinto.
+
+Esta guía no busca declarar un ganador absoluto — busca ayudarte a entender cuándo cada herramienta tiene sentido.
+
+## Arquitectura y filosofía
+
+### Prisma: el ORM de alto nivel
+
+Prisma genera un cliente tipado a partir de un archivo `.prisma` que actúa como única fuente de verdad. El flujo es:
+
+1. Definís el schema en `schema.prisma`
+2. Prisma genera el cliente con `prisma generate`
+3. Usás métodos como `prisma.user.findMany()` con autocompletado completo
+
+```ts
+// prisma/schema.prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  posts     Post[]
+  createdAt DateTime @default(now())
+}
+```
+
+El resultado es ergonómico, con queries relacionales simples y una DX excelente para casos comunes.
+
+### Drizzle: SQL-first con type-safety
+
+Drizzle toma otro camino: el schema se escribe en TypeScript, las queries se construyen como SQL tipado, y no hay generación de código en runtime.
+
+```ts
+// src/lib/db/schema.ts
+import { pgTable, text, uuid, timestamp } from 'drizzle-orm/pg-core'
+
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+```
+
+La idea central: si ya sabés SQL, Drizzle no te oculta nada — lo traduce.
+
+## Comparativa técnica
+
+### Type-safety
+
+Ambos ofrecen tipos fuertes, pero con distintas garantías:
+
+| Criterio | Prisma | Drizzle |
+|----------|--------|---------|
+| Inferencia de resultados | Generada por `prisma generate` | Inferida directamente del schema TS |
+| Queries raw type-safe | Limitado (`$queryRaw`) | Nativo con `sql` tagged template |
+| Detección de errores | En runtime si olvidás regenerar | En compilación siempre |
+
+> Con Drizzle, el schema ES el tipo. Con Prisma, el tipo viene del schema pero puede quedar desincronizado si olvidás ejecutar `prisma generate`.
+
+### Performance
+
+Drizzle tiene una ventaja medible en aplicaciones con alto throughput:
+
+1. **Sin runtime overhead**: Drizzle no tiene un proceso de generación ni un cliente singleton con conexión propia — el SQL se construye directo
+2. **Query batching manual**: Drizzle te da control total con `db.batch()` o transacciones explícitas
+3. **Bundle size**: Drizzle pesa ~50KB vs ~100KB+ de Prisma Client
+
+```ts
+// Drizzle: batch de queries en una sola request al DB
+const [users, posts] = await db.batch([
+  db.select().from(usersTable),
+  db.select().from(postsTable),
+])
+```
+
+### Migraciones
+
+Prisma usa `prisma migrate dev` que maneja el historial automáticamente pero puede ser mágico en situaciones complejas.
+
+Drizzle genera SQL puro con `drizzle-kit generate` — podés revisarlo, modificarlo, versionarlo:
+
+```sql
+-- drizzle/0001_add_users.sql
+CREATE TABLE "users" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "email" text NOT NULL,
+  "name" text,
+  "created_at" timestamp DEFAULT now() NOT NULL,
+  CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+```
+
+Esa transparencia tiene valor en entornos donde los DBAs necesitan revisar los cambios.
+
+### Compatibilidad con edge runtimes
+
+Este es el punto donde Drizzle gana más claramente: funciona en Cloudflare Workers, Vercel Edge, y cualquier entorno que no soporte Node.js completo.
+
+```ts
+// Drizzle con postgres.js en Next.js route handler
+import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/postgres-js'
+
+const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
+export const db = drizzle(sql)
+```
+
+La flag `prepare: false` es clave para compatibilidad con Supabase Transaction Pooler y otros poolers.
+
+## Cuándo elegir cada uno
+
+### Elegí Prisma si:
+
+- Tu equipo conoce Prisma y querés productividad inmediata
+- El proyecto usa queries relacionales complejas con muchos `include`
+- Necesitás Prisma Studio para visualizar datos en desarrollo
+- El proyecto ya tiene schema Prisma y no vale la pena migrar
+
+### Elegí Drizzle si:
+
+- Querés control total sobre el SQL generado
+- El proyecto corre en edge o serverless con cold starts frecuentes
+- Usás Supabase con Transaction Pooler (necesitás `prepare: false`)
+- Tu equipo tiene buen conocimiento de SQL
+- El bundle size importa (mobile web, apps pequeñas)
+
+## Configuración recomendada para Next.js + Supabase
+
+```ts
+// src/lib/db/index.ts
+import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import * as schema from './schema'
+
+const client = postgres(process.env.DATABASE_URL!, {
+  prepare: false,    // Supabase Transaction Pooler no soporta prepared statements
+  max: 1,           // Serverless: una conexión por función
+})
+
+export const db = drizzle(client, { schema })
+```
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  schema: './src/lib/db/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+})
+```
+
+## Conclusión
+
+Ni Drizzle ni Prisma son universalmente superiores. Para proyectos nuevos en 2026 con Next.js y Supabase, Drizzle es mi recomendación por su transparencia, performance en serverless y compatibilidad con edge runtimes. Para equipos con experiencia Prisma existente o proyectos con queries relacionales complejas, Prisma sigue siendo una elección sólida.
+
+Lo importante: entender las garantías que cada herramienta da (y las que no da) antes de comprometerte.

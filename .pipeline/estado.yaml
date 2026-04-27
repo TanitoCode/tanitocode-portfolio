@@ -1,0 +1,58 @@
+proyecto: "tanitocode-portfolio"
+tipo: "web"
+estructura: "single-repo"
+stack:
+  frontend: "Next.js 15"
+  backend: "Next.js route handlers"
+  db: "PostgreSQL"
+  orm: "Drizzle"
+  api: "REST"
+  auth: "none"
+  extras: ["MDX"]
+  design_system: "custom"
+  nothing_scope: []
+  component_source: "custom"
+fase_actual: "fase_4_certificacion"
+fases_completadas:
+  planificacion: 4
+  arquitectura:
+    css: "disk:/.pipeline/css-foundation.md"
+    visual_direction: "skipped-by-brief"
+    design: "disk:/.pipeline/design-system.md"
+    security: "disk:/.pipeline/security-spec.md"
+  assets_creativos:
+    necesarios: false
+    branding: "no-requerido"
+    image_backend: "no-requerido"
+    logo: "no-requerido"
+    images: "no-requerido"
+    video: "no-requerido"
+desarrollo:
+  total_tareas: 17
+  tarea_actual: 17
+  tareas_completadas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+  tareas_en_progreso: []
+  tareas_fallidas: []
+  ultimo_save: "2026-04-27T00:00:00Z"
+certificacion:
+  seo: null
+  seo_tier: "pending"
+  api_tester: null
+  performance: null
+  reality_checker: null
+  a11y_violations: 0
+  bundle_size_pass: true
+  lint_pass: true
+  type_check_pass: true
+  build_pass: true
+publicacion:
+  git_commit: null
+  deploy_url: null
+phase_gate_retries: 0
+recertification_cycles: 0
+backup_disk: "/home/soporte/tanitocode-portfolio/.pipeline/estado.yaml"
+recovered: false
+qa_mode: "full"
+engram_degraded: false
+platform: "linux-claude-code-cli"
+visual_direction_skipped_reason: "Brief de tareas.md ya define dirección visual (electric dark blue, Geist, swiss-minimal, anti-patterns HIGH explícitos). Saltado por instrucción del usuario."
