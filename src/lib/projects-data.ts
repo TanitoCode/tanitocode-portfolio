@@ -10,39 +10,39 @@ export interface Project {
   year: number
 }
 
-// TODO: reemplazar por proyectos reales
 export const projects: Project[] = [
   {
-    slug: 'devflow',
-    name: 'DevFlow',
+    slug: 'ticket-property',
+    name: 'Ticket-Property',
     description:
-      'Plataforma de gestión de tareas y sprints para equipos de desarrollo. Tablero kanban, métricas de velocidad y reportes automatizados.',
-    techs: ['React', 'Next.js', 'PostgreSQL', 'Drizzle'],
+      'Sistema fullstack de gestión de tickets y análisis automático de propiedades. Scraping de Booking y Airbnb, comparativas competitivas y reportes con colas de procesamiento asíncrono.',
+    techs: ['React', 'Node.js', 'PostgreSQL', 'Redis'],
     type: 'fullstack',
     mockupUrl: '/projects/project-01.svg',
     demoUrl: '#',
-    githubUrl: '#',
-    year: 2025,
+    githubUrl: 'https://github.com/maximosatj/Ticket-Property',
+    year: 2026,
   },
   {
-    slug: 'logstream',
-    name: 'LogStream API',
+    slug: 'instrucciones-ar-vacations',
+    name: 'AR Vacaciones — Instrucciones',
     description:
-      'API de ingesta y análisis de logs en tiempo real. Endpoints REST con autenticación JWT, filtros por nivel y exportación a CSV.',
-    techs: ['Node.js', 'PostgreSQL', 'Hono', 'TypeScript'],
-    type: 'backend',
+      'Generador visual de páginas de instrucciones para huéspedes. Soporte bilingüe (ES/EN), switch de idioma flotante, diseño mobile-first y exportación a HTML listo para publicar.',
+    techs: ['HTML', 'CSS', 'JavaScript'],
+    type: 'frontend',
     mockupUrl: '/projects/project-02.svg',
     demoUrl: '#',
-    githubUrl: '#',
+    githubUrl: 'https://github.com/TanitoCode/instrucciones-ar-vacations',
     year: 2025,
   },
   {
-    slug: 'components-lab',
-    name: 'Components Lab',
+    // TODO: reemplazar por tercer proyecto real
+    slug: 'proximo-proyecto',
+    name: 'Próximo proyecto',
     description:
-      'Librería de componentes UI accesibles con Storybook. Incluye tokens de diseño, dark mode, y cobertura de tests >95%.',
-    techs: ['React', 'TypeScript', 'Tailwind CSS'],
-    type: 'frontend',
+      'Proyecto en desarrollo. Pronto disponible con descripción, stack y links reales.',
+    techs: ['TypeScript', 'React'],
+    type: 'fullstack',
     mockupUrl: '/projects/project-03.svg',
     demoUrl: '#',
     githubUrl: '#',
