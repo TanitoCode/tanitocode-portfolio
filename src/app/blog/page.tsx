@@ -4,6 +4,9 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Blog — TanitoCode',
   description: 'Artículos sobre desarrollo web, React, Next.js y más.',
+  alternates: {
+    canonical: 'https://tanitocode.dev/blog',
+  },
 }
 
 function formatDate(raw: string): string {
