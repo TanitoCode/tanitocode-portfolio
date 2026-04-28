@@ -50,8 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){try{var s=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s||(d?'dark':'light'));}catch(e){}})();`,
           }}
         />
-        <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f7f8f8" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#08090a" media="(prefers-color-scheme: dark)" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <script
           type="application/ld+json"

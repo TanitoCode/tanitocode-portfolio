@@ -156,16 +156,18 @@ export function Projects() {
           flex-direction: column;
           gap: var(--space-4);
           padding: var(--space-6);
-          background-color: var(--color-surface);
+          background-color: var(--color-card-bg);
           border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-card);
           transition:
+            background-color var(--duration-fast) var(--ease-in-out),
             border-color var(--duration-fast) var(--ease-in-out),
             transform var(--duration-base) var(--ease-out);
         }
 
         .project-card:hover {
-          border-color: var(--color-accent-muted);
+          background-color: var(--color-surface-2);
+          border-color: rgba(var(--color-accent-rgb), 0.3);
           transform: translateY(-2px);
         }
 
@@ -242,9 +244,9 @@ export function Projects() {
           font-family: var(--font-mono);
           font-size: var(--text-xs);
           color: var(--color-fg-subtle);
-          background-color: var(--color-surface-2);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-sm);
+          background-color: var(--color-card-bg);
+          border: 1px solid var(--color-border-subtle, var(--color-border));
+          border-radius: 4px;
           line-height: 1.6;
         }
 

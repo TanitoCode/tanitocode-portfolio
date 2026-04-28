@@ -140,8 +140,9 @@ export function Nav() {
                     className="nav-link"
                     style={{
                       fontFamily: 'var(--font-sans)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      fontSize: 'var(--text-small)',
+                      fontWeight: '500',
+                      fontSize: '0.875rem',
+                      letterSpacing: '-0.01em',
                       color: 'var(--color-fg-muted)',
                       textDecoration: 'none',
                       padding: '0.375rem 0.625rem',

@@ -82,7 +82,7 @@ export function Hero() {
           font-size: var(--text-display);
           font-weight: var(--font-weight-bold);
           letter-spacing: var(--tracking-display);
-          line-height: var(--leading-tight);
+          line-height: var(--leading-display);
           color: var(--color-fg);
           margin: 0;
 
@@ -170,16 +170,17 @@ export function Hero() {
           align-items: center;
           justify-content: center;
           padding: var(--space-3) var(--space-6);
-          background-color: transparent;
+          background-color: rgba(255,255,255,0.03);
           color: var(--color-fg);
           font-family: var(--font-sans);
           font-size: var(--text-body);
-          font-weight: var(--font-weight-semibold);
+          font-weight: var(--font-weight-medium);
           text-decoration: none;
           border-radius: var(--radius-btn);
           border: 1px solid var(--color-border);
           transition:
             color var(--duration-fast) var(--ease-in-out),
+            background-color var(--duration-fast) var(--ease-in-out),
             border-color var(--duration-fast) var(--ease-in-out),
             transform var(--duration-fast) var(--ease-out);
           cursor: pointer;
@@ -187,8 +188,9 @@ export function Hero() {
         }
 
         .btn-secondary:hover {
-          color: var(--color-accent);
-          border-color: var(--color-accent);
+          color: var(--color-fg);
+          background-color: rgba(255,255,255,0.06);
+          border-color: var(--color-border-focus);
         }
 
         .btn-secondary:active {
