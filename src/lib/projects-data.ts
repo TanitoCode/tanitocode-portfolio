@@ -36,16 +36,15 @@ export const projects: Project[] = [
     year: 2025,
   },
   {
-    // TODO: reemplazar por tercer proyecto real
-    slug: 'proximo-proyecto',
-    name: 'Próximo proyecto',
+    slug: 'therapy',
+    name: 'Therapy',
     description:
-      'Proyecto en desarrollo. Pronto disponible con descripción, stack y links reales.',
-    techs: ['TypeScript', 'React'],
+      'Web app completa para consultorio de kinesiología traumatológica, pilates terapéutico y terapias wellness. Incluye sistema de turnos online con calendario interactivo, panel admin para gestión de pacientes y múltiples especialidades.',
+    techs: ['Next.js', 'PostgreSQL', 'Better Auth', 'Drizzle', 'Tailwind CSS'],
     type: 'fullstack',
     mockupUrl: '/projects/project-03.svg',
-    demoUrl: '#',
-    githubUrl: '#',
+    demoUrl: 'https://kinesio-seven.vercel.app/',
+    githubUrl: 'https://github.com/TanitoCode/therapy',
     year: 2026,
   },
 ]
